@@ -10,9 +10,10 @@ class Logistik extends Model
     use HasFactory;
 
     protected $table = "logistik";
-    protected $fillabel = [
+    protected $fillable = [
         'nama',
         'qty',
         'kondisi',
     ];
+    
 }

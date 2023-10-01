@@ -17,4 +17,8 @@ use App\Http\Controllers\Api\LogistikController;
 
 Route::prefix('logistik')->group( function () {
     Route::get('', [LogistikController::class ,'index']);
+    Route::get('/{id}', [LogistikController::class ,'show']);
+    Route::post('', [LogistikController::class ,'store']);
+    Route::put('/{id}', [LogistikController::class ,'update']);
+    Route::delete('/{id}', [LogistikController::class ,'destroy']);
 });
