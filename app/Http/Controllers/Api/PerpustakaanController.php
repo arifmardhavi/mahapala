@@ -6,6 +6,7 @@ use \App\Models\Perpustakaan;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Storage;
 
 class PerpustakaanController extends Controller
 {
@@ -31,6 +32,7 @@ class PerpustakaanController extends Controller
             'nama' => 'required|string',
             'divisi' => 'required',
             'kategori' => 'required',
+            'berkas' => 'required|mimes:pdf,doc,docx',
         ]);
 
         if ($validator->fails()) {
@@ -40,12 +42,15 @@ class PerpustakaanController extends Controller
                 'data' => $validator->errors(),
             ], 422);
         }
+        $file = $request->berkas;
+        $FileName = time() . '_' . $file->getClientOriginalName();
+        Storage::putFileAs('public/perpustakaan', $file, $FileName);
 
         $data = Perpustakaan::create([
             'nama' => $request->nama,
             'divisi' => $request->divisi,
             'kategori' => $request->kategori,
-            'berkas' => $request->berkas,
+            'berkas' => $FileName,
         ]);
 
         return response()->json([
@@ -85,6 +90,7 @@ class PerpustakaanController extends Controller
             'nama' => 'required|string',
             'divisi' => 'required',
             'kategori' => 'required',
+            'berkas' => 'mimes:pdf,doc,docx',
         ]);
 
         if ($validator->fails()) {
@@ -94,13 +100,28 @@ class PerpustakaanController extends Controller
                 'data' => $validator->errors(),
             ], 422);
         }
-        $data = Perpustakaan::find($id);
-        $data->update([
-            'nama' => $request->nama,
-            'divisi' => $request->divisi,
-            'kategori' => $request->kategori,
-            'berkas' => $request->berkas,
-        ]);
+
+        if($request->hasFile('berkas')){
+            $old_file = Perpustakaan::find($id)->berkas;
+            Storage::delete('public/perpustakaan/'.$old_file);
+
+            $file = $request->file('berkas');
+            $FileName = time() . '_' . $file->getClientOriginalName();
+            Storage::putFileAs('public/perpustakaan', $file, $FileName);
+
+            $data = Perpustakaan::where('id', $id)->update([
+                'nama' => $request->nama,
+                'divisi' => $request->divisi,
+                'kategori' => $request->kategori,
+                'berkas' => $FileName,
+            ]);
+        }else{
+            $data = Perpustakaan::where('id', $id)->update([
+                'nama' => $request->nama,
+                'divisi' => $request->divisi,
+                'kategori' => $request->kategori,
+            ]);
+        }
 
         return response()->json([
             'success' => true,
@@ -116,6 +137,7 @@ class PerpustakaanController extends Controller
     {
         $data = Perpustakaan::find($id);
         if($data){
+            Storage::delete('public/perpustakaan/'.$data->berkas);
             $data->delete();
             return response()->json([
                 'success' => true,
